@@ -5,6 +5,8 @@
 - `LANG` = language named in the message. None named → ask once, then proceed.
 - `SLUG` = lowercase kebab of LANG, symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
 - `VERSION` = latest stable LANG release, **verified at run time** (Phase 1 step 0) — never from memory alone. State it in every output.
+- LANG may name a toolchain too (e.g. "python with uv"): verify each tool's version, VERSION = all of them (e.g. `Python 3.15.2 + uv 0.13.7`).
+- **Never inspect or depend on the local machine's toolchain.** Content states the VERSION it needs; the learner installs it manually. Code is not executed (see Phase 5).
 
 `./programming_language/` is a **structure reference only**. Never read its file contents as templates, never modify it. Generate the full structure fresh for every new language (Phase 0).
 
@@ -31,7 +33,8 @@ After every planning step, **stop and wait for the user's response**. Do not con
 | Factual accuracy review (content correct for VERSION) | Sonnet | Agent tool with `model: "sonnet"`, only after scripted checks pass. Must not be the same subagent that wrote the content. |
 | Clarity + checklist review (beginner clarity, analogies, jargon, DESIGN.md checklist) | Haiku | Agent tool with `model: "haiku"`, only after scripted checks pass |
 
-- Run independent subagents in parallel, max 4 per batch.
+- Run independent subagents in parallel, max 4 per batch (count every running agent, including reviews and fixes).
+- After each launch, append one line to `SLUG/plans/agents.tsv`: `<agentId>\t<phase>\t<task>` (e.g. `a1b2…\tPhase 3 content\t01-variables-types`). Used by the token report (Finish).
 - Each subagent prompt must be self-contained: pass file paths, schema, VERSION, rules below. Subagents have no conversation context.
 
 ---
@@ -65,7 +68,8 @@ At start, check the session's skill list for `caveman` and `ponytail`. Missing �
 ```
 SLUG/
 ├── TOPIC_SUBTOPIC_LIST.md
-├── plans/
+├── TOKEN_USAGE.md          (written at Finish)
+├── plans/                  (+ agents.tsv ledger)
 └── output/
     ├── index.html
     ├── style.css
@@ -121,6 +125,7 @@ Prerequisites: <slugs or "none">
 - Code example: <what the minimal runnable example shows + expected output>
 - Production use: <where this appears in real production code>
 - Common mistakes: <1-3 beginner mistakes>
+- Sources: <1-3 official doc URLs backing this sub-topic (language/tool docs, PEPs); deep link to the exact section>
 
 ## Quiz
 1. <question idea> — tests <concept>
@@ -143,10 +148,13 @@ window.TOPICS = window.TOPICS || [];
 window.TOPICS.push({ ...JSON... });
 ```
 
-- Payload inside `push(...)` must be **strict valid JSON**: double quotes, no trailing commas, no comments.
-- Every code example must be runnable as-is and include its exact expected output (`""` if none).
-- Code examples must be **verifiable**: single file, no stdin input, no network, no external packages beyond the standard library (unless the plan names one), and **deterministic output** — no current time/date, random values, memory addresses, unordered set/hash iteration, or thread-timing in printed output. If a concept needs non-determinism (e.g. random), seed it or print only stable facts (e.g. `len(...)`, type).
+- Payload inside `push(...)` must be **strict valid JSON**: double quotes, no trailing commas, no comments. File ends with `});` — authors must run a Node parse check on the wrapper before reporting (closing `);` was dropped repeatedly).
+- Every code example must be runnable as-is and include its expected output (`""` if none). Code is **not executed**: the author traces it by hand and writes the output it would print on VERSION.
+- Terminal commands (e.g. `uv add`, `docker build`): `code.language` = `bash` (or `powershell`), output = short representative output or `""` (tool output varies by version/OS).
+- **Sources:** every sub-topic gets 1-3 `sources` from the plan — official docs only (language/tool docs, PEPs, official repos). Only URLs you are confident exist; never invent a deep link — fall back to the parent page.
+- Code examples must be **predictable**: single file, no stdin input, no network, no external packages beyond the standard library (unless the plan names one), and **deterministic output** — no current time/date, random values, memory addresses, unordered set/hash iteration, or thread-timing in printed output. If a concept needs non-determinism (e.g. random), seed it or print only stable facts (e.g. `len(...)`, type).
 - File naming must satisfy the toolchain (e.g. Java: filename = public class name; Go: `package main` + `func main`; Rust: `fn main`).
+- Terms from later topics (error names like `TypeError`, `import`, `list`…) and jargon in `productionNote`/`commonMistakes`: gloss in a short clause at first use in the topic, or use a taught alternative. Those fields are learner text too. Shell commands in prose follow the course toolchain (e.g. `uv run`, not bare `python`).
 - Quiz: vary `answerIndex` across questions — correct answer must not sit at the same index in every question.
 - `code.language` = Prism.js language id (e.g. `python`, `javascript`, `csharp`, `cpp`). `code.filename` = realistic file name shown in editor tab (e.g. `greet.py`).
 - Update `Content` column → `done` after each file.
@@ -171,7 +179,8 @@ Schema:
         { "language": "prism-language-id", "filename": "string", "source": "string", "output": "string", "explanation": "string" }
       ],
       "productionNote": "string",
-      "commonMistakes": ["string"]
+      "commonMistakes": ["string"],
+      "sources": [{ "title": "string", "url": "https://..." }]
     }
   ],
   "quiz": [
@@ -186,7 +195,7 @@ Schema:
 
 Generic renderer for the schema. No frameworks, no build step. Must work by double-clicking `index.html`.
 
-**Design: subagent must read `./DESIGN.md` in full first and follow it exactly** (tokens verbatim, `<head>` order, Open Sans + Prism.js 1.29.0 from cdnjs as the only external dependencies, class names, layout, breakpoints, behaviors, checklist). No visual styles outside DESIGN.md.
+**Design: subagent must read `./DESIGN.md` in full first and follow it exactly** (tokens verbatim, `<head>` order, DESIGN.md's web font + Prism.js 1.29.0 from cdnjs as the only external dependencies, class names, layout, breakpoints, behaviors, checklist). No visual styles outside DESIGN.md.
 
 - `data/manifest.js`:
   ```js
@@ -208,9 +217,10 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
     | sub-topic | `h2[id]` + entry in `ul.subtopics` |
     | `explanation` | body `p` (split on blank lines) |
     | `analogy` | `.note.note--tip`, label "Real-life analogy" |
-    | `code[]` | `.example` (label "Example N", title = `filename`) → `.codeblock` (tab = `filename`, lang = LANG, `language-<language>` on `<code>`, `line-numbers` if ≥ 5 lines) → `.example__output` if `output` non-empty → `explanation` in `.example__body` |
+    | `code[]` | `.example` (label "Example N", title = `filename`) → `.codeblock` (tab = `filename`, lang = display name of `code.language` (e.g. `python`→Python, `bash`→Bash, `toml`→TOML; unknown → the id), not LANG — content mixes languages, `language-<language>` on `<code>`, `line-numbers` if ≥ 5 lines) → `.example__output` if `output` non-empty → `explanation` in `.example__body` |
     | `productionNote` | `.note.note--important`, label "In production" |
     | `commonMistakes` | `.note.note--warning`, label "Common mistakes", `ul` inside |
+    | `sources` | last block of the sub-topic: `ul.meta` with first chip `<strong>Sources</strong>`, then one chip per source holding `a[href][target=_blank][rel=noopener]` (text = `title`). Only `https:` URLs rendered. |
     | `quiz` | `h2` "Quiz"; options as buttons styled from existing tokens (hairline, `--r`, hover `--surface`); correct answer = inverted (`--fg` bg) + "✓", wrong = `--line-strong` border + "✗"; explanation in `.note` after answer. Monochrome only. |
     | prev / next | `nav.pager` |
     | "Mark as complete" | button below quiz; completed topics show "✓" after the title in `ul.topics` |
@@ -240,14 +250,12 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
    - `id` equals filename, `order` unique, `prerequisites` reference only earlier topics
    - slug present in `manifest.js`; every manifest slug has a file
    - quiz answer spread: if topic has ≥3 questions, not all `answerIndex` values equal
-2. **Execute code (if LANG toolchain is installed):**
-   - Before first run, orchestrator writes a run recipe for LANG to `SLUG/plans/RUN_RECIPE.md`: toolchain version (`<tool> --version`), compile + run command, file naming rule. Use it for every example.
-   - Write each `code.source` to a temp dir in the scratchpad (filename = `code.filename`), run with a **10 s timeout**, stdin closed.
-   - Compare stdout with `code.output` after normalizing line endings (`\r\n` → `\n`) and trimming trailing whitespace. Collect mismatches, timeouts, compile errors.
-   - Toolchain missing → skip this step, note "code not executed" for the topic in the final report.
-3. **Accuracy review (Sonnet subagent, not the author):** syntax/APIs valid for VERSION, no deprecated features, claims correct, production note realistic. Returns `pass` / `fail` + issue list.
+   - every sub-topic has ≥1 `sources` entry with an `https:` URL; each unique URL answers 2xx/3xx to a Node `fetch` (GET, redirects followed, 10 s timeout, 4 at a time). Dead link → issue.
+2. **No code execution.** Do not run examples or check local toolchains; output correctness is covered by step 3.
+3. **Accuracy review (Sonnet subagent, not the author):** syntax/APIs valid for VERSION, no deprecated features, claims correct, production note realistic; trace every code example and confirm `output` is what it prints on VERSION; each source actually covers its sub-topic. Returns `pass` / `fail` + issue list.
 4. **Clarity review (Haiku subagent):** beginner clarity, analogy present and fitting, no undefined jargon, ordering beginner → production. Returns `pass` / `fail` + issue list.
-5. **Fail (any of steps 1–4)** → send combined issues to a Sonnet subagent to fix, re-verify. Max 2 rounds; then mark `Verified` = `flagged` and report to user.
+   - Steps 3–4 may batch topics in one subagent (accuracy ≤3 topics, clarity ≤6), one report block per topic.
+5. **Fail (any of steps 1, 3, 4)** → send combined issues to a Sonnet subagent to fix, re-verify. Max 2 rounds; then mark `Verified` = `flagged` and report to user.
 6. **Pass** → `Verified` column → `done`.
 
 **Once, after Phase 4:** Haiku subagent reviews `output/index.html`, `style.css`, `app.js` against the DESIGN.md checklist (tokens verbatim, no raw colors outside token block, head order, class names, `textContent` for data). Fail → Sonnet fix → re-check, max 2 rounds. Pass → header `App verified:` → `done`; still failing → `flagged`.
@@ -256,12 +264,16 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
 
 ## Finish
 
+**Token usage (always, last step):** run `node tools/token-usage.mjs SLUG [sessionId ...]` from the repo root (no session ids = newest session; pass every session the run spanned, e.g. after a RESUME). It reads the Claude Code transcripts, labels agents from `SLUG/plans/agents.tsv`, and writes `SLUG/TOKEN_USAGE.md` (by model, by phase, per agent). Unlabelled rows → fix the ledger and re-run. Don't edit the script per language.
+
 Report to user:
 - LANG, VERSION, topic count
 - files created
 - VERSION source URL + date checked
-- flagged topics + reasons; topics whose code was not executed
+- flagged topics + reasons; dead source links removed
+- versions the learner must install manually (VERSION), with official install links
 - app status (`App verified`)
+- token usage: total, main session vs subagents, top phase (from `SLUG/TOKEN_USAGE.md`)
 - how to open: `SLUG/output/index.html`
 - LEARN.md changes made this run (from Self-improvement below)
 
@@ -272,7 +284,7 @@ Report to user:
 The orchestrator may edit this file whenever a session reveals a better rule. No need to ask first; always report it.
 
 - **When:** a failure repeats (same verify issue in 2+ topics), a rule is ambiguous or contradicts another, a step wastes time or tokens, a toolchain quirk appears, or the user corrects the process.
-- **How:** smallest edit that prevents recurrence. Put the rule in the phase it governs (not a list of tips at the end). Keep the rule general; LANG-specific facts go in that language's `SLUG/plans/RUN_RECIPE.md`, not here.
+- **How:** smallest edit that prevents recurrence. Put the rule in the phase it governs (not a list of tips at the end). Keep the rule general; LANG-specific facts go in that language's `SLUG/plans/` notes, not here.
 - **Never:** loosen approval gates, model routing, accuracy rules, or `textContent` safety without explicit user approval. Do not regenerate finished work just because a rule changed; new rules apply to work not yet started unless the user says otherwise.
 - **DESIGN.md:** it is the user's portable design spec, also used outside this project. Propose changes to it; apply only after approval.
 - **Log:** add one line per change to the Changelog below, then mention it in the Finish report.
@@ -281,3 +293,8 @@ The orchestrator may edit this file whenever a session reveals a better rule. No
 
 - 2026-11-11 — VERSION verified online at run time; accuracy review moved to Sonnet (Haiku keeps clarity/checklist); `App:` / `App verified:` header status; deterministic single-file code rule + `RUN_RECIPE.md` + 10 s timeout + normalized compare; quiz answer-index spread check; `Approved:` line added to template; offline Prism limit documented; Self-improvement section added.
 - 2026-11-11 — Optional skills section: caveman (orchestrator/subagent reports only, never learner content) and ponytail (app + script code), used only if installed; subagents get the rule as one prompt line.
+- 2026-11-11 — (user request) Code no longer executed: author writes expected output by hand, accuracy reviewer traces it; RUN_RECIPE + local toolchain checks removed, learner installs VERSION manually. Per-sub-topic `sources` (official docs) added to plan template, schema, app mapping (`ul.meta` link chips) and scripted link check. Multi-tool LANG (e.g. "python with uv") → VERSION lists each tool. Phase 4 font reference fixed (DESIGN.md now uses Rubik, not Open Sans).
+- 2026-11-11 — Content authors must parse-check the `push(...)` wrapper (closing `);` dropped in 2 topics). Phase 5 reviews may batch topics per subagent (accuracy ≤3, clarity ≤6) to save tokens; reviewer still never the author.
+- 2026-11-11 — (user request) Token usage step: agent ledger `SLUG/plans/agents.tsv` + `tools/token-usage.mjs` → `SLUG/TOKEN_USAGE.md`, summarised in Finish report. Max-4 limit counts all running agents.
+- 2026-11-11 — Phase 3: gloss later-topic terms (error names, import, list) and jargon in productionNote/commonMistakes at first use; prose commands use the course toolchain (clarity review flagged this in 10+ topics).
+- 2026-11-11 — Codeblock lang label = display name of `code.language`, not LANG (bash/TOML blocks were labelled with the course language).
