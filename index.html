@@ -7,20 +7,21 @@
   <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400..800;1,400..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400..800;1,400..800&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
     <div class="progress__bar"></div>
   </div>
 
   <header class="header">
-    <button class="icon-btn menu-btn" aria-label="Open topics" aria-expanded="false" aria-controls="topics-nav">☰</button>
+    <button class="icon-btn menu-btn" aria-label="Open topics" aria-expanded="false" aria-controls="topics-nav"><svg class="i-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><svg class="i-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <a class="header__logo" href="#"><span>L</span>Learn</a>
     <span class="header__crumb">JavaScript <span>/</span> Functions <span>/</span> <b>Closures</b></span>
     <div class="header__spacer"></div>
-    <button class="icon-btn theme-btn" aria-label="Toggle theme">☾</button>
+    <button class="icon-btn theme-btn" aria-label="Toggle theme"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   </header>
 
   <div class="layout">
@@ -42,7 +43,7 @@
     </nav>
 
     <!-- Middle: learning content -->
-    <main class="content">
+    <main class="content" id="main" tabindex="-1">
       <span class="eyebrow">Chapter 06</span>
       <h1>Closures</h1>
       <p class="lead">A closure is a function bundled with references to the variables around it. It lets a function remember where it was created, even after that scope has finished running.</p>
@@ -98,7 +99,7 @@ next(); // 2</code></pre>
         <svg class="note__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
         <div class="note__body">
           <span class="note__label">Tip</span>
-          <p>Open DevTools, set a breakpoint inside the inner function, and look for the <code>Closure</code> entry under Scope.</p>
+          <p>Open DevTools (<kbd>F12</kbd>), set a breakpoint inside the inner function, and look for the <code>Closure</code> entry under Scope.</p>
         </div>
       </div>
 

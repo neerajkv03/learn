@@ -3,8 +3,10 @@ const root = document.documentElement;
 const themeBtn = document.querySelector('.theme-btn');
 const isDark = () =>
   root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
 const syncThemeBtn = () => {
-  themeBtn.textContent = isDark() ? '☀' : '☾';
+  themeBtn.innerHTML = isDark() ? SUN : MOON;
   themeBtn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
 };
 syncThemeBtn();
@@ -72,13 +74,18 @@ updateActive();
 
 // Mobile drawer.
 const menuBtn = document.querySelector('.menu-btn');
-menuBtn.addEventListener('click', () => {
-  const open = document.body.classList.toggle('nav-open');
+const isNavOpen = () => document.body.classList.contains('nav-open');
+const setNav = (open) => {
+  document.body.classList.toggle('nav-open', open);
   menuBtn.setAttribute('aria-expanded', open);
+  menuBtn.setAttribute('aria-label', open ? 'Close topics' : 'Open topics');
+};
+menuBtn.addEventListener('click', () => setNav(!isNavOpen()));
+document.querySelectorAll('.topics a').forEach((a) => a.addEventListener('click', () => setNav(false)));
+// Close on backdrop click or Escape.
+document.addEventListener('click', (e) => {
+  if (isNavOpen() && !e.target.closest('.sidebar--left, .menu-btn')) setNav(false);
 });
-document.querySelectorAll('.topics a').forEach((a) =>
-  a.addEventListener('click', () => {
-    document.body.classList.remove('nav-open');
-    menuBtn.setAttribute('aria-expanded', false);
-  })
-);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isNavOpen()) { setNav(false); menuBtn.focus(); }
+});

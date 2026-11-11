@@ -11,7 +11,7 @@ This file is a portable spec. It is applied to whatever HTML/CSS/JS files are na
 3. **Use the class names and markup given here** so pages stay consistent across files. If a file has its own class names, rename or map them; do not invent new visual styles.
 4. **Behaviors** (theme, progress, copy, anchors, active sub-topic, mobile drawer) go in the page's script file, or an inline `<script>` at the end of `<body>` if no script file is given. Add only behaviors whose elements exist on the page.
 5. **Theme restore** always goes inline in `<head>` (see Theme). The one exception to the script-file rule.
-6. **Allowed dependencies only:** Open Sans (Google Fonts) and Prism.js 1.29.0 from cdnjs (see Code highlighting). No CSS frameworks, icon fonts, other web fonts, or other libraries. Icons are inline SVG.
+6. **Allowed dependencies only:** Rubik (Google Fonts) and Prism.js 1.29.0 from cdnjs (see Code highlighting). No CSS frameworks, icon fonts, other web fonts, or other libraries. Icons are inline SVG.
 7. Run the checklist at the end before calling it done.
 
 ## Principles
@@ -19,7 +19,7 @@ This file is a portable spec. It is applied to whatever HTML/CSS/JS files are na
 1. **Monochrome UI, colored code.** Interface uses ink, paper, and grays only. Syntax colors live only inside `.codeblock`.
 2. **Inversion is the accent.** Strongest emphasis = swap foreground/background (active topic, important note, example label).
 3. **Soft depth.** Rounded corners, tonal surfaces (`--bg-soft`, `--surface`), and shadows separate layers. Hairlines (`--line`) for quiet separation.
-4. **Reading first.** Body measure ~74ch; line height 1.75.
+4. **Reading first.** Body measure ~74ch; line height 1.6.
 5. **Light + dark parity.** Every UI token is redefined for dark. Code editor stays dark in both themes.
 
 ## Tokens
@@ -28,11 +28,12 @@ Copy into the stylesheet verbatim:
 
 ```css
 :root {
-  --bg: #ffffff; --bg-soft: #f7f7f7; --fg: #0a0a0a; --fg-2: #404040; --fg-3: #737373;
+  --bg: #ffffff; --bg-soft: #f7f7f7; --fg: #0a0a0a; --fg-2: #404040; --fg-3: #666666;
   --line: #e5e5e5; --line-strong: #0a0a0a; --surface: #f4f4f4; --surface-2: #e9e9e9;
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.07);
   --shadow-lg: 0 2px 4px rgba(0,0,0,.05), 0 12px 32px rgba(0,0,0,.1);
+  --scrim: rgba(0,0,0,.35);
 
   /* Code editor: dark in both themes. Only place color is allowed. */
   --code-bg: #0d0e11; --code-bar: #17181c; --code-line: rgba(255,255,255,.08);
@@ -41,7 +42,7 @@ Copy into the stylesheet verbatim:
   --c-number: #79b8ff; --c-class: #ffab70; --c-property: #85e89d; --c-punct: #a1a1aa;
   --c-inserted: rgba(46,160,67,.18); --c-deleted: rgba(248,81,73,.18);
 
-  --sans: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sans: "Rubik", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
   --r-sm: 6px; --r: 10px; --r-lg: 14px; --r-pill: 999px;
   --header-h: 60px; --left-w: 272px; --right-w: 232px;
@@ -54,6 +55,7 @@ Copy into the stylesheet verbatim:
     --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
     --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.45);
     --shadow-lg: 0 2px 4px rgba(0,0,0,.5), 0 16px 40px rgba(0,0,0,.55);
+    --scrim: rgba(0,0,0,.6);
     color-scheme: dark;
   }
 }
@@ -63,6 +65,7 @@ Copy into the stylesheet verbatim:
   --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
   --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.45);
   --shadow-lg: 0 2px 4px rgba(0,0,0,.5), 0 16px 40px rgba(0,0,0,.55);
+  --scrim: rgba(0,0,0,.6);
   color-scheme: dark;
 }
 ```
@@ -75,6 +78,7 @@ Copy into the stylesheet verbatim:
 | `--fg` / `--fg-2` / `--fg-3` | Headings & inverted fills / body / meta & inactive |
 | `--line` / `--line-strong` | Hairlines / emphasis borders |
 | `--shadow-sm/--shadow/--shadow-lg` | Active pill / cards & hover / code editor, important note, drawer |
+| `--scrim` | Mobile drawer backdrop |
 | `--r-sm/--r/--r-lg/--r-pill` | Buttons, inline code / nav items, notes / cards, code, tables / chips, labels |
 
 ## Theme
@@ -86,24 +90,24 @@ Copy into the stylesheet verbatim:
 <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400..800;1,400..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400..800;1,400..800&display=swap">
 <link rel="stylesheet" href="STYLESHEET">
 ```
 
 - The page script only toggles and saves; never restores.
-- Toggle `.theme-btn` shows ☀ in dark, ☾ in light, with matching `aria-label`.
+- Toggle `.theme-btn` shows an inline SVG sun in dark, moon in light (set by script), with matching `aria-label`.
 
 ## Typography
 
-- **Sans: Open Sans** via the `<link>` above (never `@import`). **Mono:** system stack, no web font.
+- **Sans: Rubik** via the `<link>` above (never `@import`). **Mono:** system stack, no web font.
 
 | Role | Size | Weight | Notes |
 |---|---|---|---|
 | h1 | 2.75rem (2.125rem mobile) | 800 | Tracking `-0.03em` |
 | h2 | 1.75rem | 700 | 72px above; 32×4px pill rule (`--fg`) above text via `::before` |
 | h3 | 1.25rem | 700 | 40px above |
-| Lead | 1.1875rem / 1.7 | 400 | `--fg-2` |
-| Body | 1rem / 1.75 | 400 | `--fg-2` |
+| Lead | 1.1875rem / 1.6 | 400 | `--fg-2` |
+| Body | 1rem / 1.6 | 400 | `--fg-2` |
 | Label | 0.6875–0.75rem | 700 | Uppercase, `0.08em` tracking |
 | Code | 0.875rem / 1.7 | 400 | `--mono` |
 
@@ -122,9 +126,9 @@ Copy into the stylesheet verbatim:
 ```
 
 - `.layout` grid: `var(--left-w) minmax(0,1fr) var(--right-w)`, max-width 1480px, centered.
-- Sidebars sticky below header, own scroll. Left sidebar `--bg-soft` + right hairline.
+- Sidebars sticky below header, own scroll. Height `calc(100vh - var(--header-h))` then `calc(100dvh - …)` override, so mobile browser bars don't clip it. Left sidebar `--bg-soft` + right hairline.
 - Header: `color-mix(in srgb, var(--bg) 82%, transparent)` + `backdrop-filter: blur(10px)`, hairline bottom. Logo = 28px rounded `--fg` square with letter + wordmark. Crumb: `--fg-3`, current page in `<b>` `--fg`.
-- **≥ 1200px:** three columns. **< 1200px:** right sidebar hidden. **< 860px:** single column; left sidebar becomes fixed drawer (`translateX(-100%)`, `--shadow-lg`) toggled by `.menu-btn` via `body.nav-open`; crumb and editor dots hidden; content padding 16px.
+- **≥ 1200px:** three columns. **< 1200px:** right sidebar hidden. **< 860px:** single column; left sidebar becomes fixed drawer (`translateX(-100%)`, `--shadow-lg`) toggled by `.menu-btn` via `body.nav-open`. Closed drawer is `visibility: hidden` so its links are not tabbable. Open: `body` gets `overflow: hidden` and a `--scrim` backdrop (`body.nav-open::after`, fixed below header, z-index under drawer); backdrop click or Esc closes and returns focus to `.menu-btn`; crumb and editor dots hidden; content padding 16px.
 
 ## Components
 
@@ -137,7 +141,9 @@ Copy into the stylesheet verbatim:
 | Sub-topics | `ul.subtopics > li[.sub] > a[href="#id"]` | 2px `--line` track. Active `.is-active`: 2px `--fg` left border, `--surface` bg, right-rounded, 600 weight. `.sub` = h3, extra indent, smaller. |
 | Reading card | `.toc-progress > strong.toc-progress__pct + "read" + .toc-progress__track > .toc-progress__fill` | Under sub-topics. Rounded `--r-lg` card, `--bg-soft`. Big % number + 4px pill track, fill mirrors top bar. |
 | Sidebar label | `.sidebar__label` | 0.6875rem uppercase `--fg-3`. |
-| Icon button | `.icon-btn` | 38px, `--r`, hairline; hover `--surface`. Used by `.menu-btn`, `.theme-btn`. |
+| Icon button | `.icon-btn > svg` | 38px, `--r`, hairline; hover `--surface`. Icon 18px inline SVG, stroked like note icons. Never text glyphs (☰ ☾ ☀). Used by `.menu-btn`, `.theme-btn`. |
+| Menu button | `.menu-btn > svg.i-open + svg.i-close` | Hamburger `<path d="M4 6h16M4 12h16M4 18h16"/>`; close `<path d="M6 6l12 12M18 6 6 18"/>`. CSS shows `.i-close` only under `body.nav-open`. `aria-label` switches Open/Close topics. |
+| Skip link | `a.skip-link[href="#main"]` first in `<body>`; `main.content#main[tabindex=-1]` | Off-screen until focused, then inverted pill top-left. `.content:focus` has no outline. |
 | Heading anchors | auto-added `a.anchor` | `#` after every `h2/h3[id]` in `.content`, hidden until heading hover/focus. Added by script, not markup. |
 
 ### Content
@@ -149,6 +155,8 @@ Copy into the stylesheet verbatim:
 | Meta chips | `ul.meta > li` (value in `<strong>`) | Pill chips, `--bg-soft` + hairline. |
 | Key points | `ul.points > li` | 18px rounded `--fg` box with `--bg` check (CSS borders on `::after`, not an image). |
 | Inline code | `code` not in `pre` | `--surface`, hairline, `--r-sm`. |
+| Keyboard key | `kbd` | Mono 600, `--bg`, hairline with 2px bottom border, `--r-sm`. |
+| Plain lists | `ul`/`ol` without class in `.content` | 1.5em indent, 6px between items, `--fg-3` markers. |
 | Table | `.table-wrap > table` | Wrapper rounded `--r-lg` with hairline, scrolls horizontally. Row hairlines only; `th` `--bg-soft`, uppercase 0.8125rem. Row hover `--bg-soft`. |
 | Pager | `nav.pager > a > small + strong`, second `a.next` | Rounded `--r-lg` cards; hover lifts 2px + `--shadow`. Stacks on mobile. |
 
@@ -275,8 +283,10 @@ const root = document.documentElement;
 const themeBtn = document.querySelector('.theme-btn');
 const isDark = () =>
   root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
 const syncThemeBtn = () => {
-  themeBtn.textContent = isDark() ? '☀' : '☾';
+  themeBtn.innerHTML = isDark() ? SUN : MOON;
   themeBtn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
 };
 syncThemeBtn();
@@ -344,16 +354,21 @@ updateActive();
 
 // Mobile drawer
 const menuBtn = document.querySelector('.menu-btn');
-menuBtn.addEventListener('click', () => {
-  const open = document.body.classList.toggle('nav-open');
+const isNavOpen = () => document.body.classList.contains('nav-open');
+const setNav = (open) => {
+  document.body.classList.toggle('nav-open', open);
   menuBtn.setAttribute('aria-expanded', open);
+  menuBtn.setAttribute('aria-label', open ? 'Close topics' : 'Open topics');
+};
+menuBtn.addEventListener('click', () => setNav(!isNavOpen()));
+document.querySelectorAll('.topics a').forEach((a) => a.addEventListener('click', () => setNav(false)));
+// Close on backdrop click or Escape.
+document.addEventListener('click', (e) => {
+  if (isNavOpen() && !e.target.closest('.sidebar--left, .menu-btn')) setNav(false);
 });
-document.querySelectorAll('.topics a').forEach((a) =>
-  a.addEventListener('click', () => {
-    document.body.classList.remove('nav-open');
-    menuBtn.setAttribute('aria-expanded', false);
-  })
-);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isNavOpen()) { setNav(false); menuBtn.focus(); }
+});
 ```
 
 ## Interaction
@@ -366,7 +381,7 @@ document.querySelectorAll('.topics a').forEach((a) =>
 
 - [ ] Token block verbatim (dark override block written out in full); no raw colors outside it.
 - [ ] `<head>` order: theme restore → font preconnect/link → stylesheet. No flash in either theme.
-- [ ] Body renders in Open Sans; code in system mono.
+- [ ] Body renders in Rubik; code in system mono.
 - [ ] Only code editors contain color; rest of UI is grayscale in both themes.
 - [ ] Prism scripts load before page script; every `<code>` in `.codeblock` has `language-*` and escaped source; highlighting renders.
 - [ ] Line numbers align with code lines; `data-line` highlights sit on the right rows.
@@ -375,5 +390,7 @@ document.querySelectorAll('.topics a').forEach((a) =>
 - [ ] Every `.subtopics` link targets an existing `h2/h3[id]`; active state follows scroll; `#` anchors appear on hover.
 - [ ] Current topic has `aria-current="page"`.
 - [ ] No horizontal page scroll at 360px; code and tables scroll inside themselves.
-- [ ] Drawer works below 860px; right sidebar hidden below 1200px.
+- [ ] Drawer works below 860px (backdrop click + Esc close, page doesn't scroll behind, closed drawer not tabbable); right sidebar hidden below 1200px.
+- [ ] Skip link appears on first Tab and jumps to `#main`.
+- [ ] All icons are inline SVG; no text glyphs.
 - [ ] Keyboard focus visible on all links and buttons.
