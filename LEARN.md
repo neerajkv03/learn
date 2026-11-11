@@ -36,6 +36,17 @@ After every planning step, **stop and wait for the user's response**. Do not con
 
 ---
 
+## Optional skills (use if installed)
+
+At start, check the session's skill list for `caveman` and `ponytail`. Missing → skip; nothing else changes.
+
+- **caveman** — orchestrator chat, progress updates, and subagent reports back (review issue lists, fix receipts). **Never** in learner-facing text (topic JSON, quiz, app UI copy): global rule 2 wins. Gate summaries stay terse but list every topic/sub-topic/goal in full.
+- **ponytail** — Phase 4 app code and Phase 5 check scripts: fewest files, stdlib/native first, no deps beyond DESIGN.md's. Never cuts a Phase 4 feature, DESIGN.md checklist item, `textContent` safety, or try/catch on storage. Content code examples: minimal, but must still fully show the concept.
+- Subagents don't inherit modes. When a skill applies, put its rule in the prompt as one line (e.g. "Report terse: one line per issue, no preamble." / "Shortest working code; no extra files or deps.").
+- Neither skill overrides approval gates, model routing, or accuracy rules.
+
+---
+
 ## Global content rules (apply to every phase)
 
 1. **Production-relevant only.** Include topics, sub-topics, features commonly used in production-grade LANG code. Skip trivia, deprecated, rarely-used, or legacy-only features.
@@ -269,3 +280,4 @@ The orchestrator may edit this file whenever a session reveals a better rule. No
 ## Changelog
 
 - 2026-11-11 — VERSION verified online at run time; accuracy review moved to Sonnet (Haiku keeps clarity/checklist); `App:` / `App verified:` header status; deterministic single-file code rule + `RUN_RECIPE.md` + 10 s timeout + normalized compare; quiz answer-index spread check; `Approved:` line added to template; offline Prism limit documented; Self-improvement section added.
+- 2026-11-11 — Optional skills section: caveman (orchestrator/subagent reports only, never learner content) and ponytail (app + script code), used only if installed; subagents get the rule as one prompt line.
