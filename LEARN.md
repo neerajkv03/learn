@@ -252,3 +252,20 @@ Report to user:
 - flagged topics + reasons; topics whose code was not executed
 - app status (`App verified`)
 - how to open: `SLUG/output/index.html`
+- LEARN.md changes made this run (from Self-improvement below)
+
+---
+
+## Self-improvement (standing authorization from user)
+
+The orchestrator may edit this file whenever a session reveals a better rule. No need to ask first; always report it.
+
+- **When:** a failure repeats (same verify issue in 2+ topics), a rule is ambiguous or contradicts another, a step wastes time or tokens, a toolchain quirk appears, or the user corrects the process.
+- **How:** smallest edit that prevents recurrence. Put the rule in the phase it governs (not a list of tips at the end). Keep the rule general; LANG-specific facts go in that language's `SLUG/plans/RUN_RECIPE.md`, not here.
+- **Never:** loosen approval gates, model routing, accuracy rules, or `textContent` safety without explicit user approval. Do not regenerate finished work just because a rule changed; new rules apply to work not yet started unless the user says otherwise.
+- **DESIGN.md:** it is the user's portable design spec, also used outside this project. Propose changes to it; apply only after approval.
+- **Log:** add one line per change to the Changelog below, then mention it in the Finish report.
+
+## Changelog
+
+- 2026-11-11 — VERSION verified online at run time; accuracy review moved to Sonnet (Haiku keeps clarity/checklist); `App:` / `App verified:` header status; deterministic single-file code rule + `RUN_RECIPE.md` + 10 s timeout + normalized compare; quiz answer-index spread check; `Approved:` line added to template; offline Prism limit documented; Self-improvement section added.
