@@ -4,7 +4,7 @@
 
 - `LANG` = language named in the message. None named → ask once, then proceed.
 - `SLUG` = lowercase kebab of LANG, symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
-- `VERSION` = latest stable LANG release. State it in every output.
+- `VERSION` = latest stable LANG release, **verified at run time** (Phase 1 step 0) — never from memory alone. State it in every output.
 
 `./programming_language/` is a **structure reference only**. Never read its file contents as templates, never modify it. Generate the full structure fresh for every new language (Phase 0).
 
@@ -18,7 +18,7 @@ After every planning step, **stop and wait for the user's response**. Do not con
 - Gate 1: after Phase 1 (topic list).
 - Gate 2: after Phase 2 (all plans).
 - On RESUME: if the next phase follows a gate not yet approved, show what is ready and wait.
-- Record approval in `TOPIC_SUBTOPIC_LIST.md` header line: `Approved: list ✓ | plans ✓`.
+- Record approval in the `Approved:` header line of `TOPIC_SUBTOPIC_LIST.md` (see Phase 1 template): flip `✗` → `✓` per gate.
 
 ---
 
@@ -28,7 +28,8 @@ After every planning step, **stop and wait for the user's response**. Do not con
 |---|---|---|
 | Planning, orchestration (topic list, per-topic plans, coordination) | Opus | Main session. If main session is not Opus → tell user to run `/model opus` and stop. |
 | Content generation (topic JSON, app files) | Sonnet | Agent tool with `model: "sonnet"` |
-| Verification (review of generated content) | Haiku | Agent tool with `model: "haiku"`, only after scripted checks pass |
+| Factual accuracy review (content correct for VERSION) | Sonnet | Agent tool with `model: "sonnet"`, only after scripted checks pass. Must not be the same subagent that wrote the content. |
+| Clarity + checklist review (beginner clarity, analogies, jargon, DESIGN.md checklist) | Haiku | Agent tool with `model: "haiku"`, only after scripted checks pass |
 
 - Run independent subagents in parallel, max 4 per batch.
 - Each subagent prompt must be self-contained: pass file paths, schema, VERSION, rules below. Subagents have no conversation context.
@@ -47,7 +48,7 @@ After every planning step, **stop and wait for the user's response**. Do not con
 
 ## Phase 0 — Scaffold (idempotent)
 
-1. If `./SLUG/` exists → **RESUME**: read status columns in `SLUG/TOPIC_SUBTOPIC_LIST.md`, continue from first non-`done` item in the correct phase. Do not regenerate finished work.
+1. If `./SLUG/` exists → **RESUME**: read the header lines (`Approved:`, `App:`) and status columns in `SLUG/TOPIC_SUBTOPIC_LIST.md`, continue from first non-`done` item in the correct phase. Do not regenerate finished work.
 2. Else create this structure (mirrors `./programming_language/`):
 
 ```
@@ -66,6 +67,8 @@ SLUG/
 
 ## Phase 1 — Topic list (Opus) → `SLUG/TOPIC_SUBTOPIC_LIST.md`
 
+0. **Verify VERSION:** WebSearch/fetch the official LANG release page (e.g. python.org/downloads, nodejs.org, go.dev/dl). Use the latest stable (non-beta, non-RC) release. Record version, date checked, and source URL in the header. If lookup fails → tell user, ask them to confirm VERSION before continuing.
+
 - 15–25 topics, 3–8 sub-topics each.
 - Ordered by dependency: each topic needs only earlier topics.
 - Slug format: `NN-kebab-title` (e.g. `01-variables-types`).
@@ -74,6 +77,10 @@ Exact format:
 
 ```markdown
 # <LANG> Learning Path (v<VERSION>)
+
+Version checked: <VERSION> on <YYYY-MM-DD> via <official source URL>
+Approved: list ✗ | plans ✗
+App: todo | App verified: todo
 
 | # | Topic | Slug | Sub-topics | Plan | Content | Verified |
 |---|-------|------|------------|------|---------|----------|
@@ -127,6 +134,9 @@ window.TOPICS.push({ ...JSON... });
 
 - Payload inside `push(...)` must be **strict valid JSON**: double quotes, no trailing commas, no comments.
 - Every code example must be runnable as-is and include its exact expected output (`""` if none).
+- Code examples must be **verifiable**: single file, no stdin input, no network, no external packages beyond the standard library (unless the plan names one), and **deterministic output** — no current time/date, random values, memory addresses, unordered set/hash iteration, or thread-timing in printed output. If a concept needs non-determinism (e.g. random), seed it or print only stable facts (e.g. `len(...)`, type).
+- File naming must satisfy the toolchain (e.g. Java: filename = public class name; Go: `package main` + `func main`; Rust: `fn main`).
+- Quiz: vary `answerIndex` across questions — correct answer must not sit at the same index in every question.
 - `code.language` = Prism.js language id (e.g. `python`, `javascript`, `csharp`, `cpp`). `code.filename` = realistic file name shown in editor tab (e.g. `greet.py`).
 - Update `Content` column → `done` after each file.
 
@@ -206,6 +216,8 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
   - **Resume on revisit:** if URL has no hash → redirect to `#<last>` and restore its saved scroll (after Prism highlighting finishes). No `last` → first topic. Explicit hash in URL always wins. Unknown slug in `last` (topic removed) → first not-done topic.
   - Home page lives at `#home` (logo links there) and shows "Continue: <last topic title>" plus `done/total` count.
 - Before finishing: run the DESIGN.md checklist and report each item pass/fail.
+- Orchestrator sets header `App:` → `done` when subagent finishes.
+- Known limit: Prism language grammars load from cdnjs via autoloader, so syntax highlighting needs internet; offline, code still renders as plain monospace text.
 
 ---
 
@@ -216,12 +228,18 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
    - matches schema: required fields present and non-empty, `answerIndex` within `options` range, `options.length >= 2`
    - `id` equals filename, `order` unique, `prerequisites` reference only earlier topics
    - slug present in `manifest.js`; every manifest slug has a file
-2. **Execute code (if LANG toolchain is installed):** run each `code.source`, compare stdout with `code.output`. Collect mismatches.
-3. **Haiku subagent review:** factual accuracy for VERSION, beginner clarity, analogy present and fitting, no undefined jargon, production relevance. Returns `pass` / `fail` + issue list.
-4. **Fail** → send issues to a Sonnet subagent to fix, re-verify. Max 2 rounds; then mark `Verified` = `flagged` and report to user.
-5. **Pass** → `Verified` column → `done`.
+   - quiz answer spread: if topic has ≥3 questions, not all `answerIndex` values equal
+2. **Execute code (if LANG toolchain is installed):**
+   - Before first run, orchestrator writes a run recipe for LANG to `SLUG/plans/RUN_RECIPE.md`: toolchain version (`<tool> --version`), compile + run command, file naming rule. Use it for every example.
+   - Write each `code.source` to a temp dir in the scratchpad (filename = `code.filename`), run with a **10 s timeout**, stdin closed.
+   - Compare stdout with `code.output` after normalizing line endings (`\r\n` → `\n`) and trimming trailing whitespace. Collect mismatches, timeouts, compile errors.
+   - Toolchain missing → skip this step, note "code not executed" for the topic in the final report.
+3. **Accuracy review (Sonnet subagent, not the author):** syntax/APIs valid for VERSION, no deprecated features, claims correct, production note realistic. Returns `pass` / `fail` + issue list.
+4. **Clarity review (Haiku subagent):** beginner clarity, analogy present and fitting, no undefined jargon, ordering beginner → production. Returns `pass` / `fail` + issue list.
+5. **Fail (any of steps 1–4)** → send combined issues to a Sonnet subagent to fix, re-verify. Max 2 rounds; then mark `Verified` = `flagged` and report to user.
+6. **Pass** → `Verified` column → `done`.
 
-**Once, after Phase 4:** Haiku subagent reviews `output/index.html`, `style.css`, `app.js` against the DESIGN.md checklist (tokens verbatim, no raw colors outside token block, head order, class names, `textContent` for data). Fail → Sonnet fix → re-check, max 2 rounds.
+**Once, after Phase 4:** Haiku subagent reviews `output/index.html`, `style.css`, `app.js` against the DESIGN.md checklist (tokens verbatim, no raw colors outside token block, head order, class names, `textContent` for data). Fail → Sonnet fix → re-check, max 2 rounds. Pass → header `App verified:` → `done`; still failing → `flagged`.
 
 ---
 
@@ -230,5 +248,7 @@ Generic renderer for the schema. No frameworks, no build step. Must work by doub
 Report to user:
 - LANG, VERSION, topic count
 - files created
-- flagged topics + reasons
+- VERSION source URL + date checked
+- flagged topics + reasons; topics whose code was not executed
+- app status (`App verified`)
 - how to open: `SLUG/output/index.html`
