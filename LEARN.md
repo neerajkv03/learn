@@ -1,6 +1,6 @@
 # LEARN — Programming Language Course Generator
 
-**Invocation:** the user sends `@LEARN.md <language>` (e.g. `@LEARN.md python`).
+**Invocation:** the user sends `@LEARN.md <language>` (e.g. `@LEARN.md python`). To add topics to a finished course: `@LEARN.md extend <SLUG> <addition>` (see Extend course).
 
 - `LANG` = the language named in the message. If none is named, ask once, then proceed.
 - `SLUG` = lowercase kebab-case of LANG, with symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
@@ -101,7 +101,7 @@ SLUG/
 
 0. **Verify VERSION.** Use one Haiku subagent to search and fetch the official LANG release page (e.g. python.org/downloads, nodejs.org, go.dev/dl). Use the latest stable release (no betas or RCs). Record the version, date checked and source URL in the header. If the lookup fails, tell the user and ask them to confirm VERSION before continuing.
 
-- 15–25 topics, 3–8 sub-topics each.
+- 15–25 topics, 3–8 sub-topics each (an Extend run may go past 25).
 - Ordered by dependency: each topic needs only earlier topics.
 - Slug format: `NN-kebab-title` (e.g. `01-variables-types`).
 
@@ -219,6 +219,28 @@ Report to the user:
 
 ---
 
+## Extend course (`@LEARN.md extend <SLUG> <addition>`)
+
+Adds topics (e.g. a framework like FastAPI) to a finished course. It uses the same sessions, gates, model routing and Workflow. Existing topics are never regenerated.
+
+1. **Session A (Phase 1, new rows only):**
+   - Record the session id.
+   - Verify each new tool's version (Phase 1 step 0) and append it to VERSION and the `Version checked:` line.
+   - Append the new rows, numbered after the last topic, with status `todo | todo | todo`. Use 3–8 sub-topics each, ordered by dependency on the existing topics.
+   - Set `Approved: list ✗ | plans ✗`.
+   - **STOP (Gate 1):** show only the new rows.
+2. **Session B (Phase 2, new rows only):**
+   - If `plans/_taught.md` is missing, build it first, one line per existing topic, from the existing plans. Never read topic data for this.
+   - Then write the new plans, and append their `_taught.md` lines. Prerequisites may name any earlier slug.
+   - **STOP (Gate 2).**
+3. **Session C:**
+   - Phase 4 step 2 only: append the new slugs to `MANIFEST`. Update `window.LANG` if the addition changes the course name. Do not re-copy the app template.
+   - Then run the Workflow with `topics` and `author` set to the new slugs only.
+   - Then Finish. The token report covers every session in `sessions.txt`, old ones included.
+4. **Existing topics:** only change them if the user asks (e.g. a forward pointer to the new section). Use `learn-fixer` with a targeted issue list. Never use `learn-author`.
+
+---
+
 ## Self-improvement (standing authorization from user)
 
 The orchestrator may edit this file, `.claude/agents/learn-*.md` and `tools/*` whenever a session reveals a better rule. There is no need to ask first; always report it.
@@ -242,3 +264,4 @@ The orchestrator may edit this file, `.claude/agents/learn-*.md` and `tools/*` w
 - 2026-11-11 — Codeblock lang label = display name of `code.language`, not LANG (bash/TOML blocks were labelled with the course language).
 - 2026-11-12 — (user request, token optimisation; python-uv run: 43M tokens, 62% orchestrator) One session per phase group + `plans/sessions.txt`. Phases 3+5 run as `tools/course-pipeline.js` Workflow (orchestrator no longer woken per agent). Project agents `.claude/agents/learn-{author,accuracy,clarity,fixer}.md` hold static rules (shared cached prefix, tiny prompts). `LEDGER:` prompt line replaces `agents.tsv`. Shared validator `tools/check-topic.mjs` (authors self-check, ≤4 calls). Phase 4 = copy verified `tools/app-template/` (spec moved to `SPEC.md`). Re-verify checks only reported issues; fixer uses targeted edits. Phase 2 adds `_taught.md` + terse plans. Author self-check list built from python-uv review findings. Token report adds weighted column. Project `.claude/settings.json` disables unused plugins (postman, superpowers).
 - 2026-11-12 — (user request) Superpowers kept only as 5 project skills in `.claude/skills/` (verification-before-completion, systematic-debugging, dispatching-parallel-agents, writing-skills, diagnosing-superpowers). Plugin stays off: plugin skills can't be toggled one by one, and brainstorming/plans/TDD/worktree/review skills clash with LEARN.md's flow.
+- 2026-11-12 — (user request) Extend course section + `extend <SLUG>` invocation: append topics to a finished course (new rows only, gates re-opened, `_taught.md` rebuilt if missing, manifest append, Workflow on new slugs); >25 topics allowed when extending.
