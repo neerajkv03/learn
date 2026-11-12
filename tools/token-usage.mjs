@@ -29,7 +29,8 @@ const read = (id, file) => {
   const seen = new Map(); let model = "", prompt = "";
   for (const line of fs.readFileSync(file, "utf8").split("\n")) {
     let j; try { j = JSON.parse(line); } catch { continue; }
-    if (!prompt && j.type === "user") { const c = j.message?.content; prompt = typeof c === "string" ? c : Array.isArray(c) ? c.map(b => b.text || "").join("\n") : ""; }
+    // Workflow agents get a harness relay message first; LEDGER is in a later user message.
+    if (j.type === "user" && !prompt.includes("LEDGER:")) { const c = j.message?.content; prompt += "\n" + (typeof c === "string" ? c : Array.isArray(c) ? c.map(b => b.text || "").join("\n") : ""); }
     if (j.type === "assistant" && j.message?.usage) { model = j.message.model || model; seen.set(j.message.id || j.uuid, j.message.usage); }
   }
   const r = { id, model, calls: seen.size, input: 0, cacheWrite: 0, cacheRead: 0, output: 0 };
